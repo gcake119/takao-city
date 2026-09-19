@@ -1,6 +1,6 @@
 # Takao City Coordination
 
-本 repository 是鹽埕區公所採購工作台的 coordination repo，用來保存跨前後端共同依據，不承載可執行的產品程式碼。
+本 repository 是鹽埕區公所出納工作台的 coordination repo，用來保存跨前後端共同依據，不承載可執行的產品程式碼。
 
 ## 收錄內容
 
@@ -23,4 +23,5 @@
 
 ## 目前規劃
 
-- [鹽埕區公所秘書室採購工作台 POC 規劃](docs/plans/2026-09-19-鹽埕區公所採購工作台-POC-規劃.md)
+- [鹽埕區公所秘書室出納工作台 POC 規劃](docs/plans/2026-09-19-鹽埕區公所出納工作台-POC-規劃.md)
+- [已被取代的採購工作台規劃](docs/plans/2026-09-19-鹽埕區公所採購工作台-POC-規劃.md)
