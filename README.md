@@ -13,7 +13,7 @@
 ## Repository 分工
 
 - Coordination：本 repository。
-- Frontend：[`gcake119/takao-city-frondend`](https://github.com/gcake119/takao-city-frondend)，負責 Vue 3 應用程式。
+- Frontend：[`gcake119/takao-city-frontend`](https://github.com/gcake119/takao-city-frontend)，負責 Vue 3 應用程式。
 - Backend：[`gcake119/takao-city-backend`](https://github.com/gcake119/takao-city-backend)，負責 NestJS API、Drizzle ORM 與 SQLite。
 - Document Engine：[`gcake119/takao-document-engine`](https://github.com/gcake119/takao-document-engine)，負責以 Python 從紙本文件電子檔擷取候選欄位。
 
