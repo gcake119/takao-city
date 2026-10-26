@@ -25,3 +25,7 @@
 
 - [鹽埕區公所秘書室出納工作台 POC 規劃](docs/plans/2026-09-19-鹽埕區公所出納工作台-POC-規劃.md)
 - [已被取代的採購工作台規劃](docs/plans/2026-09-19-鹽埕區公所採購工作台-POC-規劃.md)
+
+## CI baseline
+
+Repository ownership/privacy/documentation and Mint runner controls are verified by an infrastructure-only baseline. Application implementation and acceptance remain separate. See [CI scope](docs/ci-baseline.md).

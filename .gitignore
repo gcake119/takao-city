@@ -1,0 +1,11 @@
+.env
+.env.*
+!.env.example
+node_modules/
+dist/
+data/
+private/
+*.db
+*.sqlite*
+__pycache__/
+ci-verification.json
