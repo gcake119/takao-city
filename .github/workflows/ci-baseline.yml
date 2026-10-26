@@ -1,0 +1,32 @@
+name: Mint repository baseline
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  repository-baseline:
+    runs-on: ${{ github.repository == 'gcake119/takao-city' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && fromJSON('["self-hosted","Linux","X64","repo-takao-city"]') || 'ubuntu-24.04' }}
+    timeout-minutes: 60
+    env:
+      CI_RESOURCE_CLASS: light
+    defaults:
+      run:
+        shell: bash .github/ci/run-step.sh {0}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Verify dedicated Mint identity and shared controls
+        run: bash .github/ci/prepare-mint.sh
+      - name: Verify repository baseline and honest application boundary
+        run: python3 .github/ci/verify-baseline.py
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ci-verification-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ci-verification.json
+          if-no-files-found: error
