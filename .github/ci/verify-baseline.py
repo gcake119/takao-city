@@ -2,9 +2,13 @@ import hashlib,json,os,re,subprocess,urllib.parse
 from pathlib import Path
 
 def git(*args):return subprocess.check_output(['git',*args],text=True).strip()
-root=Path.cwd().resolve();config=json.loads(Path('.ci/repository-baseline.json').read_text());repo=os.environ['GITHUB_REPOSITORY'];assert config['schemaVersion']==1 and config['repository']==repo
+root=Path.cwd().resolve();config=json.loads(Path('.ci/repository-baseline.json').read_text());repo=os.environ['GITHUB_REPOSITORY'];canonical=config['repository'];assert config['schemaVersion']==1
+if os.environ.get('RUNNER_ENVIRONMENT')=='self-hosted':
+ assert os.getuid()==995 and repo==canonical and os.environ['RUNNER_NAME']=='mint-'+canonical.removeprefix('gcake119/'),'CI_MINT_IDENTITY'
+else:
+ assert os.environ.get('RUNNER_ENVIRONMENT')=='github-hosted' and re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9-]*/[A-Za-z0-9_.-]+',repo),'CI_HOSTED_IDENTITY'
 roles={'takao-city':'coordination','takao-city-frontend':'frontend','takao-document-engine':'document-engine','takao-city-backend':'backend'}
-name=repo.removeprefix('gcake119/');assert repo.startswith('gcake119/') and roles[name]==config['role']
+name=canonical.removeprefix('gcake119/');assert canonical.startswith('gcake119/') and roles[name]==config['role']
 assert config['coordination']=='https://github.com/gcake119/takao-city'
 assert config['verificationScope']=='repository-baseline-only' and config['applicationVerification']=='not-implemented-not-tested'
 assert config['applicationStatus']==('not-applicable-documentation-only' if name=='takao-city' else 'not-initialized')
@@ -26,5 +30,5 @@ for raw in re.findall(r'\]\(([^)]+)\)',readme):
  if not relative:continue
  path=(root/relative).resolve();assert path.is_relative_to(root) and path.exists(),'BROKEN_OR_ESCAPING_README_LINK';local_links+=1
 sha=git('rev-parse','HEAD');assert sha==os.environ['GITHUB_SHA'];subprocess.check_call(['git','diff','--quiet']);subprocess.check_call(['git','diff','--cached','--quiet'])
-receipt={'sourceSha':sha,'sourceTree':git('rev-parse','HEAD^{tree}'),'repository':repo,'runner':os.environ['RUNNER_NAME'],'scope':'repository-baseline-only','role':config['role'],'trackedFiles':len(files),'readmeLocalLinks':local_links,'ownershipAndPrivacyBaseline':'passed','applicationVerification':'not-implemented-not-tested','deployment':'not-run','humanAcceptance':'not-run'}
+receipt={'sourceSha':sha,'sourceTree':git('rev-parse','HEAD^{tree}'),'repository':repo,'canonicalRepository':canonical,'runner':os.environ['RUNNER_NAME'],'scope':'repository-baseline-only','role':config['role'],'trackedFiles':len(files),'readmeLocalLinks':local_links,'ownershipAndPrivacyBaseline':'passed','applicationVerification':'not-implemented-not-tested','deployment':'not-run','humanAcceptance':'not-run'}
 Path('ci-verification.json').write_text(json.dumps(receipt,indent=2)+'\n');print(json.dumps({'baseline':'passed','applicationVerification':receipt['applicationVerification'],'localLinks':local_links}))
