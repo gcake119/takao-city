@@ -7,6 +7,7 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+  id-token: write
 jobs:
   repository-baseline:
     runs-on: ${{ github.repository == 'gcake119/takao-city' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && fromJSON('["self-hosted","Linux","X64","repo-takao-city"]') || 'ubuntu-24.04' }}
@@ -25,8 +26,21 @@ jobs:
         run: bash .github/ci/prepare-mint.sh
       - name: Verify repository baseline and honest application boundary
         run: python3 .github/ci/verify-baseline.py
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      - name: Preserve untrusted PR diagnostic exception
+        if: ${{ !(github.actor != 'dependabot[bot]' && github.event.pull_request.user.login != 'dependabot[bot]' && ((github.event_name != 'pull_request' && github.event_name != 'pull_request_target') || github.event.pull_request.head.repo.full_name == github.repository)) }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: ci-verification-${{ github.run_id }}-${{ github.run_attempt }}
           path: ci-verification.json
+          if-no-files-found: error
+      - name: Store trusted exact-run verification evidence
+        if: ${{ github.actor != 'dependabot[bot]' && github.event.pull_request.user.login != 'dependabot[bot]' && ((github.event_name != 'pull_request' && github.event_name != 'pull_request_target') || github.event.pull_request.head.repo.full_name == github.repository) }}
+        uses: ./.github/actions/ci-artifact
+        with:
+          endpoint: ${{ secrets.CI_ARTIFACT_ENDPOINT }}
+          profile: ci-verification
+          path: ci-verification.json
+          receipt: ci-verification.json
+          outcome: pass
+          evidence-class: diagnostic
           if-no-files-found: error
