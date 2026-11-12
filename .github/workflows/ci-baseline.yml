@@ -10,7 +10,7 @@ permissions:
   id-token: write
 jobs:
   repository-baseline:
-    runs-on: ${{ github.repository == 'gcake119/takao-city' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && fromJSON('["self-hosted","Linux","X64","repo-takao-city"]') || 'ubuntu-24.04' }}
+    runs-on: ["self-hosted", "Linux", "X64", "repo-takao-city"]
     timeout-minutes: 60
     env:
       CI_RESOURCE_CLASS: light
@@ -18,23 +18,36 @@ jobs:
       run:
         shell: bash .github/ci/run-step.sh {0}
     steps:
+      - name: Require trusted source before self-hosted execution
+        id: ci_source_admission
+        shell: bash --noprofile --norc -e -o pipefail {0}
+        env:
+          CI_SOURCE_TRUSTED: ${{ github.repository == 'gcake119/takao-city' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+        run: |
+          [[ "${CI_SOURCE_TRUSTED:-}" == true ]] || {
+            echo 'CI_SOURCE_REQUIRES_ISOLATED_SELF_HOSTED_RUNNER' >&2
+            exit 1
+          }
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        if: ${{ steps.ci_source_admission.outcome == 'success' }}
         with:
           ref: ${{ github.sha }}
           persist-credentials: false
       - name: Verify dedicated Mint identity and shared controls
+        if: ${{ steps.ci_source_admission.outcome == 'success' }}
         run: bash .github/ci/prepare-mint.sh
       - name: Verify repository baseline and honest application boundary
+        if: ${{ steps.ci_source_admission.outcome == 'success' }}
         run: python3 .github/ci/verify-baseline.py
       - name: Preserve untrusted PR diagnostic exception
-        if: ${{ !(github.actor != 'dependabot[bot]' && github.event.pull_request.user.login != 'dependabot[bot]' && ((github.event_name != 'pull_request' && github.event_name != 'pull_request_target') || github.event.pull_request.head.repo.full_name == github.repository)) }}
+        if: ${{ steps.ci_source_admission.outcome == 'success' && (!(github.actor != 'dependabot[bot]' && github.event.pull_request.user.login != 'dependabot[bot]' && ((github.event_name != 'pull_request' && github.event_name != 'pull_request_target') || github.event.pull_request.head.repo.full_name == github.repository))) }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: ci-verification-${{ github.run_id }}-${{ github.run_attempt }}
           path: ci-verification.json
           if-no-files-found: error
       - name: Store trusted exact-run verification evidence
-        if: ${{ github.actor != 'dependabot[bot]' && github.event.pull_request.user.login != 'dependabot[bot]' && ((github.event_name != 'pull_request' && github.event_name != 'pull_request_target') || github.event.pull_request.head.repo.full_name == github.repository) }}
+        if: ${{ steps.ci_source_admission.outcome == 'success' && (github.actor != 'dependabot[bot]' && github.event.pull_request.user.login != 'dependabot[bot]' && ((github.event_name != 'pull_request' && github.event_name != 'pull_request_target') || github.event.pull_request.head.repo.full_name == github.repository)) }}
         uses: ./.github/actions/ci-artifact
         with:
           endpoint: ${{ secrets.CI_ARTIFACT_ENDPOINT }}
